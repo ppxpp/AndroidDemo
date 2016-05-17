@@ -15,4 +15,22 @@ public class Task {
         }
     }
 
+    /**
+     * 通知任务执行完成
+     */
+    public void notifyCompleted(){
+
+    }
+
+    public void notifyCanceled(){
+
+    }
+
+    /**
+     * 通知任务执行失败
+     */
+    public void notifyFailed(){
+
+    }
+
 }
