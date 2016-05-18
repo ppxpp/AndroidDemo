@@ -19,9 +19,15 @@ import java.util.List;
 public class FileUtils {
 
     // SD卡根目录
-    public static String PREFIX_SDCARD_EXTERNAL = "/storage/extsd";
+    //public static final String PREFIX_SDCARD_EXTERNAL = "/storage/extsd";
+    public static final String PREFIX_SDCARD_EXTERNAL = "/mnt/usb/sda1/8_4/data";
     // 车机存储根目录
-    public static String PREFIX_NATIVE_EXTERNAL = "/storage/extsd/ztest";
+    //public static final String PREFIX_NATIVE_EXTERNAL = "/storage/extsd/ztest";
+    public static String PREFIX_NATIVE_EXTERNAL = "/storage/extsd";
+    //预置的结果文件
+    public static final String RESULT_FILE_PATH = "md5result";
+    //分割字符
+    public static final String SEG_STR = "\t";
 
     public static final int ERR_SUCCESS = 0;
     public static final int ERR_FILE_NOT_FOUND = 1;
@@ -37,7 +43,6 @@ public class FileUtils {
         File file = new File(fullPath);
         if (file.isFile()) {
             list.add(filePath);
-            System.out.println("add " + filePath);
         }else if (file.isDirectory()) {
             String[] filesNames = file.list(filenameFilter);
             if (filesNames != null) {
@@ -50,6 +55,19 @@ public class FileUtils {
     }
 
 
+    /**
+     * 获取文件的长度
+     * @param filePath
+     * @return
+     */
+    public static long length(String filePath){
+        long length = -1L;
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()){
+            length = file.length();
+        }
+        return length;
+    }
 
     public static int copy(String srcFilePath, String dstFilePath){
         File srcFile = new File(srcFilePath);
@@ -89,6 +107,14 @@ public class FileUtils {
             return ERR_IO_EXCEPTION;
         }
         return ERR_SUCCESS;
+    }
+
+    public static boolean deleteFile(String filePath){
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()){
+            return file.delete();
+        }
+        return false;
     }
 
     public static String calculateMD5(String filePath, long byteOffset, long byteCount){

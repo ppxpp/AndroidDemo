@@ -12,60 +12,76 @@ import java.util.List;
  */
 public class FileCopyManager {
 
-    public static final int MSG_COPY_PROGRESS_CHANGED = 1;
-    public static final int MSG_COPY_STARTED = 2;
-    public static final int MSG_WORKER_COMPLETED = 3;
-    public static final int MSG_WORKER_CANCELED = 4;
+    private static FileCopyManager instance = new FileCopyManager();
+
+    private FileCopyManager(){}
+
+    public static FileCopyManager getInstance(){
+        return instance;
+    }
+
+    public static final int ERR_MD5RESULT_COPY_FAILED = 1;
+
+
+    public static final int MSG_COPY_STARTED = 1;
+    public static final int MSG_COPY_OR_CHECK_FAILED = 2;
+    public static final int MSG_CHECK_SUCCESS = 3;
+    public static final int MSG_COPY_COMPLETED = 5;
+    public static final int MSG_COPY_CANCELED = 6;
+    public static final int MSG_COPY_ERROR = 7;
 
     private Handler mUIHandler = new Handler(Looper.getMainLooper()){
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what){
                 case MSG_COPY_STARTED:
-                    notifyCopyStarted();
+                    mFileCount = msg.arg1;
+                    notifyCopyStarted(mFileCount);
                     break;
-                case MSG_COPY_PROGRESS_CHANGED:
-                    mCompletedTask++;
-                    //notify progress changed
-                    notifyCopyProgressChanged(mCompletedTask, mTotalTask);
+                case MSG_COPY_OR_CHECK_FAILED:
+                    mCurtProgress++;
+                    notifyCopyProgressChanged(mCurtProgress, mFileCount);
+                    notifyCopyOrCheckFailed((CheckDiff) msg.obj);
                     break;
-                case MSG_WORKER_COMPLETED:
-                    if (mWorkerTeam != null && mWorkerTeam.isCompleted()){
-                        //copy completed
-                        notifyCopyCompleted();
-                    }
+                case MSG_CHECK_SUCCESS:
+                    mCurtProgress++;
+                    notifyCopyProgressChanged(mCurtProgress, mFileCount);
                     break;
-                case MSG_WORKER_CANCELED:
-
+                case MSG_COPY_COMPLETED:
+                    mFileCopyThread = null;
+                    notifyCopyCompleted();
+                    break;
+                case MSG_COPY_ERROR:
+                    int err = msg.arg1;
+                    notifyCopyError(err);
+                    break;
+                case MSG_COPY_CANCELED:
+                    notifyCopyCanceled();
                     break;
             }
         }
     };
 
-    private TaskPool mCopyTaskPool;
-    private FileCopyWorker.WorkerTeam mWorkerTeam;
-    private int mTotalTask, mCompletedTask;
+    private int mFileCount = 0;
+    private int mCurtProgress = 0;
 
-    private void init(){
-        mCopyTaskPool = new FileCopyTaskPool(FileUtils.PREFIX_SDCARD_EXTERNAL + "/tencent/seed");
-    }
+    FileCopyThread mFileCopyThread;
 
-    /**
-     * not run in UI thread
-     */
     public void startCopy(){
-        //cancelCopy();
-        mCopyTaskPool.initPool();
-        mTotalTask = mCopyTaskPool.getTaskCount();
-        mCompletedTask = 0;
-        mWorkerTeam = new FileCopyWorker.WorkerTeam();
-        mWorkerTeam.startWorking(mCopyTaskPool, mUIHandler);
+        if (mFileCopyThread != null){
+            mFileCopyThread.cancel();
+            mFileCopyThread = null;
+        }
+        mFileCount = -1;
+        mCurtProgress = 0;
+        mFileCopyThread = new FileCopyThread(mUIHandler);
+        mFileCopyThread.start();
     }
 
     public void cancelCopy(){
-        if (mWorkerTeam != null){
-            mWorkerTeam.stopWorking();
-            mWorkerTeam = null;
+        if (mFileCopyThread != null){
+            mFileCopyThread.cancel();
+            mFileCopyThread = null;
         }
     }
 
@@ -89,10 +105,10 @@ public class FileCopyManager {
         }
     }
 
-    private synchronized void notifyCopyStarted(){
+    private synchronized void notifyCopyStarted(int fileCount){
         if (mFileCopyListeners != null){
             for (FileCopyListener listener : mFileCopyListeners){
-                listener.onCopyStarted();
+                listener.onCopyStarted(fileCount);
             }
         }
     }
@@ -105,10 +121,26 @@ public class FileCopyManager {
         }
     }
 
+    private synchronized void notifyCopyOrCheckFailed(CheckDiff diff){
+        if (mFileCopyListeners != null){
+            for (FileCopyListener listener : mFileCopyListeners){
+                listener.onCopyOrCheckFailed(diff);
+            }
+        }
+    }
+
     private synchronized void notifyCopyCompleted(){
         if (mFileCopyListeners != null){
             for (FileCopyListener listener : mFileCopyListeners){
                 listener.onCopyCompleted();
+            }
+        }
+    }
+
+    private synchronized void notifyCopyError(int err){
+        if (mFileCopyListeners != null){
+            for (FileCopyListener listener : mFileCopyListeners){
+                listener.onCopyError(err);
             }
         }
     }
@@ -123,9 +155,21 @@ public class FileCopyManager {
 
     public interface FileCopyListener{
 
-        void onCopyStarted();
+        void onCopyStarted(int size);
 
         void onCopyProgressChanged(int completed, int total);
+
+        /**
+         * 拷贝单个文件失败或校验单个文件失败
+         * @param diff
+         */
+        void onCopyOrCheckFailed(CheckDiff diff);
+
+        /**
+         * 拷贝任务失败
+         * @param err
+         */
+        void onCopyError(int err);
 
         void onCopyCompleted();
 

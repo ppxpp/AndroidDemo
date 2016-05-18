@@ -46,14 +46,14 @@ public class FileCopyWorker extends Thread {
             task.execute();
             task.notifyCompleted();
         }
-        if (mCompleted && mCallbackHandler != null){
+        /*if (mCompleted && mCallbackHandler != null){
             mCallbackHandler.sendEmptyMessage(FileCopyManager.MSG_WORKER_COMPLETED);
         }else if (mIsWaitingCancel){
             mCanceled = true;
             if (mCallbackHandler != null){
                 mCallbackHandler.sendEmptyMessage(FileCopyManager.MSG_WORKER_CANCELED);
             }
-        }
+        }*/
     }
 
     public static class WorkerTeam {

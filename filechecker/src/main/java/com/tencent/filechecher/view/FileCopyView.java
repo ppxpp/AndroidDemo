@@ -1,22 +1,11 @@
-package com.tencent.filechecher.presenter;
+package com.tencent.filechecher.view;
 
 import com.tencent.filechecher.CheckDiff;
-import com.tencent.filechecher.view.FileCopyView;
-
-import java.io.File;
 
 /**
- * Created by haoozhou on 2016/5/8.
+ * Created by haoozhou on 2016/5/18.
  */
-public interface IFileCopyPresenter {
-
-    void init();
-
-    void uninit();
-
-    void startCopy();
-
-    void cancelCopy();
+public interface FileCopyView {
 
     void onFileCopyStarted(int fileCount);
 
@@ -29,5 +18,4 @@ public interface IFileCopyPresenter {
     void onFileCopyCanceled();
 
     void onFileCopyError(int err);
-
 }
