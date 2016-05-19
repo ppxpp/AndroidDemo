@@ -1,6 +1,6 @@
-package com.tencent.filechecher.view;
+package com.tencent.filechecker.view;
 
-import com.tencent.filechecher.CheckDiff;
+import com.tencent.filechecker.entity.CheckDiff;
 
 /**
  * Created by haoozhou on 2016/5/18.

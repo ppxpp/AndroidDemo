@@ -1,4 +1,4 @@
-package com.tencent.filechecher;
+package com.tencent.filechecker;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
-import com.tencent.filechecher.view.FileCopyViewImplFragment;
+import com.tencent.filechecker.view.FileDetectViewImplFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -14,7 +14,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        showFragment(FileCopyViewImplFragment.newInstance());
+        //showFragment(FileCopyViewImplFragment.newInstance());
+        showFragment(FileDetectViewImplFragment.newInstance());
     }
 
     public void back(View view){

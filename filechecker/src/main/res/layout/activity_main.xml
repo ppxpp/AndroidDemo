@@ -8,7 +8,8 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:orientation="vertical"
-    tools:context="com.tencent.filechecher.MainActivity">
+    android:background="#88000000"
+    tools:context="com.tencent.filechecker.MainActivity">
 
     <Button
         android:text="Back"

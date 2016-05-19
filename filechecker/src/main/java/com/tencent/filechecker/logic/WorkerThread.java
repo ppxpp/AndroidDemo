@@ -1,9 +1,13 @@
-package com.tencent.filechecher;
+package com.tencent.filechecker.logic;
 
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.tencent.filechecker.FileUtils;
+import com.tencent.filechecker.entity.CheckDiff;
+import com.tencent.filechecker.entity.DataFile;
 
 import java.io.File;
 
@@ -22,26 +26,19 @@ class WorkerThread extends Thread {
     boolean mCanceled;
 
     boolean mDoCopy, mDoCheck;
+    private String mSrcPathPrefix;
+    private String mDstPathPrefix;
 
     /**
      * 是否允许快速复制。若源文件和目标文件都存在且文件大小一致，则不进行复制操作
      */
     boolean mEnableQuickCopy;
 
-    public WorkerThread(FileCopyThread fileCopyThread, boolean doCopy, boolean doCheck, Handler callbackHandler, String name) {
-        /*super(name);
-        this.fileCopyThread = fileCopyThread;
-        mDoCopy = doCopy;
-        mDoCheck = doCheck;
-        mCallbackHandler = callbackHandler;
-        mCompleted = false;
-        mCanceled = false;
-        mWaitingCancel = false;
-        mEnableQuickCopy = false;*/
-        this(fileCopyThread, doCopy, doCheck, false, callbackHandler, name);
-    }
+    /*public WorkerThread(FileCopyThread fileCopyThread, String srcPathPrefix, String dstPathPrefix, boolean doCopy, boolean doCheck, Handler callbackHandler, String name) {
+        this(fileCopyThread, srcPathPrefix, dstPathPrefix, doCopy, doCheck, false, callbackHandler, name);
+    }*/
 
-    public WorkerThread(FileCopyThread fileCopyThread, boolean doCopy, boolean doCheck, boolean enableQuickCopy, Handler callbackHandler, String name) {
+    public WorkerThread(FileCopyThread fileCopyThread, String srcPathPrefix, String dstPathPrefix, boolean doCopy, boolean doCheck, boolean enableQuickCopy, Handler callbackHandler, String name) {
         super(name);
         this.fileCopyThread = fileCopyThread;
         mDoCopy = doCopy;
@@ -51,6 +48,8 @@ class WorkerThread extends Thread {
         mCanceled = false;
         mWaitingCancel = false;
         mEnableQuickCopy = enableQuickCopy;
+        mSrcPathPrefix = srcPathPrefix;
+        mDstPathPrefix = dstPathPrefix;
     }
 
     /**
@@ -88,8 +87,10 @@ class WorkerThread extends Thread {
                 mCompleted = true;
                 break;
             }
-            String srcFilePath = FileUtils.PREFIX_SDCARD_EXTERNAL + File.separator + file.path;
-            String dstFilePath = FileUtils.PREFIX_NATIVE_EXTERNAL + File.separator + file.path;
+            //String srcFilePath = FileUtils.PREFIX_SDCARD_EXTERNAL + File.separator + file.path;
+            String srcFilePath = mSrcPathPrefix + File.separator + file.path;
+            //String dstFilePath = FileUtils.PREFIX_NATIVE_EXTERNAL + File.separator + file.path;
+            String dstFilePath = mDstPathPrefix + File.separator + file.path;
             int copyResult = FileUtils.ERR_SUCCESS;
             if (mDoCopy) {
                 if (mEnableQuickCopy){
@@ -99,6 +100,10 @@ class WorkerThread extends Thread {
                     }
                 }else {
                     copyResult = FileUtils.copy(srcFilePath, dstFilePath);
+                }
+                if (!mDoCheck && copyResult == FileUtils.ERR_SUCCESS){
+                    //如果不校验，则需要通知复制成功
+                    notifyCopyOrCheckSuccess(file);
                 }
             }
             if (copyResult != FileUtils.ERR_SUCCESS) {
@@ -115,15 +120,19 @@ class WorkerThread extends Thread {
                     //拷贝失败，文件长度不一致
                     CheckDiff diff = new CheckDiff();
                     diff.diffType = CheckDiff.DiffType.DifSize;
+                    if (!(new File(dstFilePath).exists())){
+                        diff.diffType = CheckDiff.DiffType.Missing;
+                    }
                     diff.filePath = file.path;
                     diff.dataType = CheckDiff.DataType.map(file.path);
+                    diff.md5Stander = file.md5;
                     notifyCopyOrCheckFailed(diff);
                 } else {
                     //计算MD5值
                     String md5Calculated = FileUtils.calculateMD5(dstFilePath, file.offset, file.checkSize);
                     if (!TextUtils.isEmpty(md5Calculated) && md5Calculated.equals(file.md5)) {
                         //文件完全相同，拷贝成功
-                        notifyCheckSuccess(file);
+                        notifyCopyOrCheckSuccess(file);
                     } else {
                         //文件MD5值不同，拷贝失败
                         CheckDiff diff = new CheckDiff();
@@ -164,9 +173,9 @@ class WorkerThread extends Thread {
     }
 
 
-    private void notifyCheckSuccess(DataFile dataFile) {
+    private void notifyCopyOrCheckSuccess(DataFile dataFile) {
         if (mCallbackHandler != null) {
-            Message msg = mCallbackHandler.obtainMessage(FileCopyManager.MSG_CHECK_SUCCESS);
+            Message msg = mCallbackHandler.obtainMessage(FileCopyManager.MSG_COPY_OR_CHECK_SUCCESS);
             msg.obj = dataFile;
             mCallbackHandler.sendMessage(msg);
         }

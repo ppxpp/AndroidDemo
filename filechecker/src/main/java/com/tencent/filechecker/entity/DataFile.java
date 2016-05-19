@@ -1,4 +1,6 @@
-package com.tencent.filechecher;
+package com.tencent.filechecker.entity;
+
+import com.tencent.filechecker.FileUtils;
 
 /**
  * Created by haoozhou on 2016/5/17.

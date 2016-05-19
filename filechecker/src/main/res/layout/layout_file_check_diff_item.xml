@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="120dp">
+
+    <RelativeLayout
+        android:id="@+id/label_layout"
+        android:layout_width="80dp"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/diff_type"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerVertical="true"
+            android:gravity="center"
+            android:text="丢失"
+            android:textColor="#000"
+            android:textSize="25dp" />
+
+        <TextView
+            android:id="@+id/diff_no"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:text="编号:1314"
+            android:textColor="#000"
+            android:textSize="15dp" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/file_path"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="5dp"
+        android:layout_toRightOf="@id/label_layout"
+        android:textColor="#fff"
+        android:textSize="18dp" />
+
+    <TextView
+        android:id="@+id/md5_calculated"
+        android:layout_width="450dp"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/file_path"
+        android:layout_below="@id/file_path"
+        android:layout_marginTop="5dp"
+        android:textColor="#fff"
+        android:textSize="18dp" />
+
+    <TextView
+        android:id="@+id/md5_stander"
+        android:layout_width="450dp"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/md5_calculated"
+        android:layout_below="@id/md5_calculated"
+        android:layout_marginTop="5dp"
+        android:text="标准MD5值：5ebcef9df3f216af0b5270fc60179993"
+        android:textColor="#fff"
+        android:textSize="18dp" />
+
+    <TextView
+        android:id="@+id/data_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/md5_calculated"
+        android:layout_toRightOf="@id/md5_calculated"
+        android:textColor="#fff"
+        android:textSize="18dp" />
+
+    <TextView
+        android:id="@+id/last_modified"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/data_type"
+        android:layout_below="@id/data_type"
+        android:layout_marginTop="5dp"
+        android:textColor="#fff"
+        android:textSize="18dp" />
+
+    <Button
+        android:id="@+id/btn_del"
+        android:text="删除错误文件"
+        android:focusable="false"
+        android:visibility="invisible"
+        android:layout_width="120dp"
+        android:layout_alignParentRight="true"
+        android:layout_height="match_parent" />
+
+</RelativeLayout>

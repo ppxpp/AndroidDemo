@@ -1,4 +1,4 @@
-package com.tencent.filechecher;
+package com.tencent.filechecker;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -18,12 +18,7 @@ import java.util.List;
  */
 public class FileUtils {
 
-    // SD卡根目录
-    //public static final String PREFIX_SDCARD_EXTERNAL = "/storage/extsd";
-    public static final String PREFIX_SDCARD_EXTERNAL = "/mnt/usb/sda1/8_4/data";
-    // 车机存储根目录
-    //public static final String PREFIX_NATIVE_EXTERNAL = "/storage/extsd/ztest";
-    public static String PREFIX_NATIVE_EXTERNAL = "/storage/extsd";
+
     //预置的结果文件
     public static final String RESULT_FILE_PATH = "md5result";
     //分割字符
@@ -69,6 +64,20 @@ public class FileUtils {
         return length;
     }
 
+    /**
+     * 创建该文件所在的所有目录
+     * @param fullPath
+     */
+    public static boolean mkdirsIfNeeded(String fullPath){
+        int idx = fullPath.lastIndexOf(File.separator);
+        String dstDirStr = fullPath.substring(0, idx);
+        File dstDir = new File(dstDirStr);
+        if (!dstDir.exists()) {
+            return dstDir.mkdirs();
+        }
+        return true;
+    }
+
     public static int copy(String srcFilePath, String dstFilePath){
         File srcFile = new File(srcFilePath);
         File dstFile = new File(dstFilePath);
@@ -82,12 +91,13 @@ public class FileUtils {
             dstFile.delete();
         }
         //mkdirs
-        int idx = dstFilePath.lastIndexOf(File.separator);
+        mkdirsIfNeeded(dstFilePath);
+        /*int idx = dstFilePath.lastIndexOf(File.separator);
         String dstDirStr = dstFilePath.substring(0, idx);
         File dstDir = new File(dstDirStr);
         if (!dstDir.exists()) {
             dstDir.mkdirs();
-        }
+        }*/
         try {
             BufferedInputStream bis = new BufferedInputStream(new FileInputStream(srcFile));
             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(dstFile));

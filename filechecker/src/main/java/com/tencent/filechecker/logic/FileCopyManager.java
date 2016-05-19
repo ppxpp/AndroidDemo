@@ -1,8 +1,11 @@
-package com.tencent.filechecher;
+package com.tencent.filechecker.logic;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+
+import com.tencent.filechecker.entity.CheckDiff;
+import com.tencent.filechecker.entity.CopyConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +28,7 @@ public class FileCopyManager {
 
     public static final int MSG_COPY_STARTED = 1;
     public static final int MSG_COPY_OR_CHECK_FAILED = 2;
-    public static final int MSG_CHECK_SUCCESS = 3;
+    public static final int MSG_COPY_OR_CHECK_SUCCESS = 3;
     public static final int MSG_COPY_COMPLETED = 5;
     public static final int MSG_COPY_CANCELED = 6;
     public static final int MSG_COPY_ERROR = 7;
@@ -40,12 +43,12 @@ public class FileCopyManager {
                     break;
                 case MSG_COPY_OR_CHECK_FAILED:
                     mCurtProgress++;
-                    notifyCopyProgressChanged(mCurtProgress, mFileCount);
+                    notifyCopyOrCheckProgressChanged(mCurtProgress, mFileCount);
                     notifyCopyOrCheckFailed((CheckDiff) msg.obj);
                     break;
-                case MSG_CHECK_SUCCESS:
+                case MSG_COPY_OR_CHECK_SUCCESS:
                     mCurtProgress++;
-                    notifyCopyProgressChanged(mCurtProgress, mFileCount);
+                    notifyCopyOrCheckProgressChanged(mCurtProgress, mFileCount);
                     break;
                 case MSG_COPY_COMPLETED:
                     mFileCopyThread = null;
@@ -67,14 +70,14 @@ public class FileCopyManager {
 
     FileCopyThread mFileCopyThread;
 
-    public void startCopy(){
+    public void startCopy(CopyConfig config){
         if (mFileCopyThread != null){
             mFileCopyThread.cancel();
             mFileCopyThread = null;
         }
         mFileCount = -1;
         mCurtProgress = 0;
-        mFileCopyThread = new FileCopyThread(mUIHandler);
+        mFileCopyThread = new FileCopyThread(config, mUIHandler);
         mFileCopyThread.start();
     }
 
@@ -113,7 +116,7 @@ public class FileCopyManager {
         }
     }
 
-    private synchronized void notifyCopyProgressChanged(int completed, int total){
+    private synchronized void notifyCopyOrCheckProgressChanged(int completed, int total){
         if (mFileCopyListeners != null){
             for (FileCopyListener listener : mFileCopyListeners){
                 listener.onCopyProgressChanged(completed, total);

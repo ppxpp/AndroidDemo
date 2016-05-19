@@ -1,9 +1,12 @@
-package com.tencent.filechecher;
+package com.tencent.filechecker.logic;
 
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
 import android.util.Log;
+
+import com.tencent.filechecker.FileUtils;
+import com.tencent.filechecker.entity.DetectConfig;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -27,6 +30,7 @@ public class FileDetectThread extends Thread {
 
     private Handler mCallbackHandler;
     private List<String> mFileList;
+    private DetectConfig mConfig;
     //预置的结果文件
     private String outFilePath = FileUtils.RESULT_FILE_PATH;
 
@@ -37,37 +41,42 @@ public class FileDetectThread extends Thread {
             "tencent/wecarnavi/data",
     };
 
-    public FileDetectThread(Handler callbackHandler){
+    public FileDetectThread(DetectConfig config, Handler callbackHandler){
         mCallbackHandler = callbackHandler;
         mFileList = new ArrayList<>(1350);
+        if (config == null){
+            config = DetectConfig.defaultConfig();
+        }
+        mConfig = config;
     }
 
 
     public void run(){
         long time = SystemClock.elapsedRealtime();
+        notifyCheckStarted();
         collectFiles();
         //删除之前的结果文件
-        String outFullPath = FileUtils.PREFIX_SDCARD_EXTERNAL + "/" + outFilePath;
+        //String outFullPath = FileUtils.PREFIX_SDCARD_EXTERNAL + "/" + outFilePath;
+        String outFullPath = mConfig.PREFIX_USB_EXTERNAL + "/" + outFilePath;
         FileUtils.deleteFile(outFullPath);
 
         File outFile = new File(outFullPath);
-        //// TODO: 2016/5/18 检查目录是否存在
+        //确保目录存在
+        FileUtils.mkdirsIfNeeded(outFullPath);
+
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
             final int size = mFileList.size();
             for (int i = 0; i < mFileList.size(); i++){
                 String path = mFileList.get(i);
-                String fullPath = FileUtils.PREFIX_SDCARD_EXTERNAL + "/" + path;
+                //String fullPath = FileUtils.PREFIX_SDCARD_EXTERNAL + "/" + path;
+                String fullPath = mConfig.PREFIX_USB_EXTERNAL + "/" + path;
                 File file = new File(fullPath);
                 if (!file.exists()){
                     Log.d(TAG, "file not exists, " + file);
                     continue;
                 }
                 long length = file.length();
-                /*if (length <= 0){
-                    Log.d(TAG, "file length = 0, " + file);
-                    continue;
-                }*/
                 long offset = 0L;
                 long checkSize = CHECK_SIZE;
                 if (length < checkSize){
@@ -89,15 +98,20 @@ public class FileDetectThread extends Thread {
                     notifyProgressChanged(i + 1, size);
                 }catch (IOException e){
                     e.printStackTrace();
+                    notifyCheckError(1);
+                    return;
                 }
             }
             writer.flush();
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
+            notifyCheckError(1);
+            return;
         }
         time = SystemClock.elapsedRealtime() - time;
         Log.d(TAG, "time = " + time / 1000);
+        notifyCheckCompleted();
 
     }
 
@@ -108,7 +122,8 @@ public class FileDetectThread extends Thread {
     private void collectFiles(){
         mFileList.clear();
         for (String source : mDataSourceList){
-            mFileList.addAll(FileUtils.traverseFiles(FileUtils.PREFIX_SDCARD_EXTERNAL, source, mFilenameFilter));
+            //mFileList.addAll(FileUtils.traverseFiles(FileUtils.PREFIX_SDCARD_EXTERNAL, source, mFilenameFilter));
+            mFileList.addAll(FileUtils.traverseFiles(mConfig.PREFIX_USB_EXTERNAL, source, mFilenameFilter));
         }
     }
 
@@ -125,6 +140,13 @@ public class FileDetectThread extends Thread {
         }
     };
 
+    private void notifyCheckStarted(){
+        if (mCallbackHandler != null){
+            Message msg = mCallbackHandler.obtainMessage(FileDetectManager.MSG_DETECT_STARTED);
+            mCallbackHandler.sendMessage(msg);
+        }
+    }
+
 
     /**
      * 通知进度
@@ -134,9 +156,24 @@ public class FileDetectThread extends Thread {
     private void notifyProgressChanged(int progress, int total){
         Log.d(TAG, "onProgress, " + progress + "/" + total);
         if (mCallbackHandler != null){
-            Message msg = mCallbackHandler.obtainMessage(1);
+            Message msg = mCallbackHandler.obtainMessage(FileDetectManager.MSG_DETECT_PROGRESS);
             msg.arg1 = progress;
             msg.arg2 = total;
+            mCallbackHandler.sendMessage(msg);
+        }
+    }
+
+    private void notifyCheckCompleted(){
+        if (mCallbackHandler != null){
+            Message msg = mCallbackHandler.obtainMessage(FileDetectManager.MSG_DETECT_COMPLETED);
+            mCallbackHandler.sendMessage(msg);
+        }
+    }
+
+    private void notifyCheckError(int err){
+        if (mCallbackHandler != null){
+            Message msg = mCallbackHandler.obtainMessage(FileDetectManager.MSG_DETECT_ERROR);
+            msg.arg1 = err;
             mCallbackHandler.sendMessage(msg);
         }
     }

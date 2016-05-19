@@ -1,10 +1,14 @@
-package com.tencent.filechecher;
+package com.tencent.filechecker.logic;
 
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.tencent.filechecker.FileUtils;
+import com.tencent.filechecker.entity.CopyConfig;
+import com.tencent.filechecker.entity.DataFile;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,10 +29,16 @@ public class FileCopyThread extends Thread {
     private Handler mCallbackHandler;
     private List<DataFile> mFileList;
 
-    public FileCopyThread(/*String seedFilePath, */Handler callbackHandler){
+    private CopyConfig mConfig;
+
+    public FileCopyThread(CopyConfig config, Handler callbackHandler){
         mCallbackHandler = callbackHandler;
         mFileList = new ArrayList<>(1350);
         mWaitingCancel = false;
+        if (config == null){
+            config = CopyConfig.defaultConfig();
+        }
+        mConfig = config;
     }
 
     /**
@@ -49,8 +59,10 @@ public class FileCopyThread extends Thread {
     public void run(){
         long time = SystemClock.elapsedRealtime();
         //拷贝预置结果文件
-        String srcResultPath = FileUtils.PREFIX_SDCARD_EXTERNAL + "/" + FileUtils.RESULT_FILE_PATH;
-        String dstResultPath = FileUtils.PREFIX_NATIVE_EXTERNAL + "/" + FileUtils.RESULT_FILE_PATH;
+        //String srcResultPath = FileUtils.PREFIX_SDCARD_EXTERNAL + "/" + FileUtils.RESULT_FILE_PATH;
+        String srcResultPath = mConfig.PREFIX_USB_EXTERNAL + "/" + FileUtils.RESULT_FILE_PATH;
+        //String dstResultPath = FileUtils.PREFIX_NATIVE_EXTERNAL + "/" + FileUtils.RESULT_FILE_PATH;
+        String dstResultPath = mConfig.PREFIX_NATIVE_EXTERNAL + "/" + FileUtils.RESULT_FILE_PATH;
         int copyResult = FileUtils.copy(srcResultPath, dstResultPath);
         if (copyResult != FileUtils.ERR_SUCCESS || FileUtils.length(srcResultPath) != FileUtils.length(dstResultPath)){
             //拷贝失败
@@ -79,7 +91,8 @@ public class FileCopyThread extends Thread {
         //开始拷贝
         WorkerThread[] workers = new WorkerThread[8];
         for (int i = 0; i < workers.length; i++){
-            workers[i] = new WorkerThread(this, true, true, true, mCallbackHandler, "worker-" + i);
+            workers[i] = new WorkerThread(this, mConfig.PREFIX_USB_EXTERNAL, mConfig.PREFIX_NATIVE_EXTERNAL, mConfig.DoCopy, mConfig.DoCheck, mConfig.EnableQuickCopy,
+                    mCallbackHandler, "worker-" + i);
             //workers[i] = new WorkerThread(this, false, true, true, mCallbackHandler, "worker-" + i);
             workers[i].start();
         }
@@ -202,13 +215,5 @@ public class FileCopyThread extends Thread {
             mCallbackHandler.sendEmptyMessage(FileCopyManager.MSG_COPY_CANCELED);
         }
     }
-
-    /*private void notifyCopyOrCheckFailed(CheckDiff diff){
-        if (mCallbackHandler != null){
-            Message msg = mCallbackHandler.obtainMessage(FileCopyManager.MSG_COPY_OR_CHECK_FAILED);
-            msg.obj = diff;
-            mCallbackHandler.sendMessage(msg);
-        }
-    }*/
 
 }

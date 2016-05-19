@@ -1,7 +1,7 @@
-package com.tencent.filechecher;
+package com.tencent.filechecker.entity;
 
 
-public class CheckDiff/* implements Comparable<CheckDiff>*/{
+public class CheckDiff implements Comparable<CheckDiff>{
 
 	public enum DataType{
 		WeCarSpeech,
@@ -53,15 +53,14 @@ public class CheckDiff/* implements Comparable<CheckDiff>*/{
 		return sb.toString();
 	}
 
-	/*@Override
+	@Override
 	public int compareTo(CheckDiff another) {
-		// TODO Auto-generated method stub
 		if (diffType != another.diffType) {
 			return diffType.compareTo(another.diffType);
 		}
 		if (dataType != another.dataType) {
 			return dataType.compareTo(another.dataType);
 		}
-		return Long.compare(lastModified, another.lastModified);
-	}*/
+		return filePath.compareTo(another.filePath);
+	}
 }

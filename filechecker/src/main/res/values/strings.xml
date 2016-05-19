@@ -1,6 +1,13 @@
 <resources>
     <string name="app_name">Filechecker</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+    <string name="result_diff_no">编号: %d</string>
+    <string name="result_file_path">文件: %1$s</string>
+    <string name="result_md5_statder">标准MD5值: %1$s</string>
+    <string name="result_md5_calculated">当前MD5值: %1$s</string>
+    <string name="result_data_type">数据类型: %1$s</string>
+    <string name="result_last_modified">更新时间: %1$s</string>
 </resources>
